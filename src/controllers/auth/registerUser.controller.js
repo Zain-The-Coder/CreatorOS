@@ -5,6 +5,11 @@ const JWT = require('jsonwebtoken')
 
 async function registerUserController (req , res) {
     try {
+            await userModel.updateMany(
+                { profileCompleted: { $exists: false } },
+                { $set: { profileCompleted: true } }
+            )
+            
         const {username , email , password , role} = req.body ;
 
         if(!username || !email || !password) {

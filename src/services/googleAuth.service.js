@@ -26,5 +26,34 @@ exports.getAuthUrl = (state) => {
 
 exports.handleCallback = async (code) => {
   const { tokens } = await client.getToken(code);
-  return { tokens };
+
+  // 1) id_token verify karke user ki info nikalo
+  const ticket = await client.verifyIdToken({
+    idToken: tokens.id_token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const profile = ticket.getPayload();
+
+  // 2) YouTube channel ka data lo
+  const res = await fetch(
+    'https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true',
+    { headers: { Authorization: `Bearer ${tokens.access_token}` } }
+  );
+  const yt = await res.json();
+  const channel = yt.items?.[0] || null;
+
+  return {
+    profile: {
+      googleId: profile.sub,
+      email: profile.email,
+      name: profile.name,
+      picture: profile.picture,
+    },
+    channel: channel && {
+      id: channel.id,
+      title: channel.snippet.title,
+      subscribers: channel.statistics?.subscriberCount,
+    },
+    refreshToken: tokens.refresh_token, // sirf pehli baar milta hai
+  };
 };

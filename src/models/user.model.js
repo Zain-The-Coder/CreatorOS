@@ -4,36 +4,46 @@ const mongoose = require('mongoose')
 const userSchema = new mongoose.Schema({
     username : {
         type : String ,
-        required : [true , "username is required"] ,
-        lowercase : true  ,
+        required : [function () { return !this.googleId || this.profileCompleted }, "username is required"] ,
+        lowercase : true ,
         unique : true ,
-        minLength: [3 , "username must be contains 3 characters or more"] 
+        sparse : true ,
+        minLength: [3 , "username must be contains 3 characters or more"]
     } ,
     email : {
-        type : String , 
+        type : String ,
         required : [true , "email address is required"] ,
+        lowercase : true ,
         unique : true
     } ,
     password : {
         type : String ,
-        required : true ,
-        minLength: [6 , "password must be 6 characters"]   
+        required : [function () { return !this.googleId }, "password is required"] ,
+        minLength: [6 , "password must be 6 characters"]
     } ,
     role : {
         type : [String] ,
         required : [true , "role is not selected"] ,
         default : "viewer" ,
         enum : ["admin" , "workspace_admin" , "viewer"]
-    }
-})
+    } ,
 
+    // Google / YouTube fields
+    googleId : { type : String , unique : true , sparse : true } ,
+    picture : String ,
+    youtube : {
+        channelId : String ,
+        channelTitle : String ,
+        subscribers : String ,
+        refreshToken : { type : String , select : false }
+    } ,
+    profileCompleted : { type : Boolean , default : false }
+} , { timestamps : true })
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  
+userSchema.pre('save', async function () {
+  if (!this.isModified('password') || !this.password) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
-
 
 const userModel = mongoose.model("User" , userSchema);
 module.exports = userModel

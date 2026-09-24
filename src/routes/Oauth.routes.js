@@ -17,13 +17,16 @@ OauthRouter.get("/google" , (req , res) => {
 OauthRouter.get('/google/callback' , async (req , res) => {
     try {
         const {code , state} = req.query ;
-        console.log('query state:', state);
-        console.log('session state:', req.session.oauthState);
+        const stateData = req.session.oauthstate;
 
-        if (!code || state !== req.session.oauthState) {
+        console.log(stateData)
+        console.log(state)
+        
+        if (!code || state !== stateData) {
             return res.status(400).json({
                 status : 403 ,
-                message : "State didn't match"
+                message : req.session ,
+                state
             })
         }
 
@@ -31,7 +34,7 @@ OauthRouter.get('/google/callback' , async (req , res) => {
 
 
         const data = await googleService.handleCallback(code);
-        console.log(chalk.chalkStderr.bold.yellow(data)); // abhi sirf test ke liye
+        console.log(chalk.chalkStderr.bold.yellow(JSON.stringify(data))); // abhi sirf test ke liye
 
         res.status(200).json({
             status : 200 ,
