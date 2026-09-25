@@ -57,3 +57,64 @@ exports.handleCallback = async (code) => {
     refreshToken: tokens.refresh_token, // sirf pehli baar milta hai
   };
 };
+
+exports.getAccessTokenFromRefresh = async (refreshToken) => {
+  client.setCredentials({ refresh_token: refreshToken });
+  const { credentials } = await client.refreshAccessToken();
+  return credentials.access_token;
+};
+
+
+exports.getUploadsPlaylistId = async (accessToken) => {
+  const res = await fetch(
+    'https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true',
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const data = await res.json();
+  return data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads || null;
+};
+
+exports.getPlaylistVideos = async (accessToken, playlistId) => {
+  const res = await fetch(
+    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const data = await res.json();
+
+  return (data.items || []).map((item) => ({
+    videoId: item.snippet.resourceId.videoId,
+    title: item.snippet.title,
+    publishedAt: item.snippet.publishedAt,
+  }));
+};
+
+
+exports.getVideosFullDetails = async (accessToken, videoIds) => {
+  const idsParam = videoIds.join(',');
+
+  const res = await fetch(
+    `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails,status&id=${idsParam}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const data = await res.json();
+
+  return (data.items || []).map((item) => ({
+    videoId: item.id,
+    title: item.snippet.title,
+    description: item.snippet.description,
+    publishedAt: item.snippet.publishedAt,
+    thumbnails: item.snippet.thumbnails,
+    tags: item.snippet.tags || [],
+    categoryId: item.snippet.categoryId,
+
+    views: item.statistics.viewCount,
+    likes: item.statistics.likeCount,
+    comments: item.statistics.commentCount,
+
+    duration: item.contentDetails.duration,
+    definition: item.contentDetails.definition, // hd / sd
+    caption: item.contentDetails.caption,       // true/false
+
+    privacyStatus: item.status.privacyStatus,   // public/private/unlisted
+  }));
+};

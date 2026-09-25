@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const videoSchema = new mongoose.Schema({
     creatorId : {
         type : mongoose.Schema.Types.ObjectId ,
-        ref : "CreatorProfile" ,
+        ref : "User" ,
         required : true ,
     } ,
     title : {

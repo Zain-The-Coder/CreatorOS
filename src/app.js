@@ -1,6 +1,7 @@
 const express = require('express')
 const authRouter = require('./routes/auth.routes.js')
 const oauthRouter = require('./routes/Oauth.routes.js')
+const dashBoardRouter = require('./routes/dashboard.routes.js')
 const cookieParser = require('cookie-parser')
 const session = require('express-session')
 const helmet = require('helmet')
@@ -32,5 +33,6 @@ app.get("/" , (req , res) => {
 
 app.use("/api/auth" , authRouter)
 app.use("/auth" , oauthRouter)
+app.use('/api/dashboard' , dashBoardRouter)
 
 module.exports = app ;
