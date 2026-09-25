@@ -48,7 +48,7 @@ const loginUserController = async (req , res) => {
             httpOnly : true ,
             secure : true ,
             sameSite : "None" , 
-            maxAge : 60 * 60 * 24
+            maxAge : 60 * 60 * 24 * 1000
         })
 
         res.status(200).json({
@@ -59,10 +59,10 @@ const loginUserController = async (req , res) => {
 
 
     } catch (e) {
+        console.log(e.stack)
         res.status(500).json({
             status : 500 ,
             message : e.message , 
-            error_details : e.stack
         })
     }
 }

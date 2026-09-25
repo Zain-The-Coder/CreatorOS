@@ -48,8 +48,10 @@ async function registerUserController (req , res) {
             })
         }
 
+        let profileCompleted = false
+
         const user = await userModel.create({
-            username , email , password , role
+            username , email , password , role , profileCompleted
         })
         
         const token = JWT.sign({
@@ -61,21 +63,20 @@ async function registerUserController (req , res) {
             httpOnly : true ,
             secure : true ,
             sameSite : "None" , 
-            maxAge : 60 * 60 * 24
+            maxAge : 60 * 60 * 24 * 1000
         })
 
         res.status(201).json({
             status : 201 ,
             message : "User Created Successfully !" ,
             user_details : user ,
-            user_token : token
         })
 
     } catch (e) {
+        console.log(e.stack)
         return res.status(500).json({
             status : 500 ,
             error_message : e.message ,
-            error_details : e.stack
         })
     }
 }
