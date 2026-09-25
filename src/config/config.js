@@ -10,7 +10,8 @@ const config = {
     GOOGLE_AUTH_CLIENTSECRET : process.env.GOOGLE_AUTH_CLIENTSECRET ,
     GOOGLE_REDIRECT_URI : process.env.GOOGLE_REDIRECT_URI ,
     SESSION_SECRET : process.env.SESSION_SECRET ,
-    TOKEN_ENC_KEY : process.env.TOKEN_ENC_KEY
+    TOKEN_ENC_KEY : process.env.TOKEN_ENC_KEY ,
+    REDIS_URL : process.env.REDIS_URL
 };
 
 if(!process.env.MONGODB_URI) {

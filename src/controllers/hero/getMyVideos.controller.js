@@ -29,11 +29,13 @@ const getMyVideos = async (req , res) => {
 
         const videos = await googleService.getPlaylistVideos(accessToken , uploadPlayListId)
 
+        const videoIds = videos.map((v) => v.videoId);
+        const fullDetails = await googleService.getVideosFullDetails(accessToken , videoIds)
 
         res.status(200).json({
             status : 200 ,
             message : "videos fetched successfully " ,
-            videos
+            fullDetails
         });
 
     } catch (e) {

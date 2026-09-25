@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser')
 const session = require('express-session')
 const helmet = require('helmet')
 const config = require('./config/config.js')
+const redis = require('./services/redis.service.js')
 
 const app = express()
 

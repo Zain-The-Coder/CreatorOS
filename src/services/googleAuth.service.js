@@ -103,7 +103,7 @@ exports.getVideosFullDetails = async (accessToken, videoIds) => {
     title: item.snippet.title,
     description: item.snippet.description,
     publishedAt: item.snippet.publishedAt,
-    thumbnails: item.snippet.thumbnails,
+    thumbnails: item.snippet.thumbnails.default,
     tags: item.snippet.tags || [],
     categoryId: item.snippet.categoryId,
 
