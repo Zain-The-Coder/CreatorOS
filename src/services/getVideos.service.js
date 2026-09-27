@@ -20,7 +20,7 @@ exports.getFullVideoDetails = async (userId) => {
   const user = await userModel.findById(userId).select('+youtube.refreshToken');
 
   if (!user || !user.youtube?.refreshToken) {
-    const err = new Error('YouTube account connected nahi hai');
+    const err = new Error("YouTube account didn't connected");
     err.statusCode = 400;
     throw err;
   }
@@ -29,6 +29,7 @@ exports.getFullVideoDetails = async (userId) => {
   const accessToken = await googleService.getAccessTokenFromRefresh(refreshToken);
 
   const uploadsPlaylistId = await googleService.getUploadsPlaylistId(accessToken);
+  const analytics = await googleService.getChannelAnalytics(accessToken , user.youtube.channelId)
   if (!uploadsPlaylistId) {
     const err = new Error("Uploads playlist didn't found");
     err.statusCode = 404;
@@ -37,7 +38,13 @@ exports.getFullVideoDetails = async (userId) => {
 
   const videos = await googleService.getPlaylistVideos(accessToken, uploadsPlaylistId);
   const videoIds = videos.map((v) => v.videoId);
-  const fullDetails = await googleService.getVideosFullDetails(accessToken, videoIds);
+  const videoDetails = await googleService.getVideosFullDetails(accessToken, videoIds);
+  
+  const fullDetails = {
+    videoDetails ,
+    analytics
+  }
+
 
   try {
     await redis.set(cacheKey, JSON.stringify(fullDetails), 'EX', CACHE_TTL_SECONDS);
@@ -45,5 +52,5 @@ exports.getFullVideoDetails = async (userId) => {
     console.error('Redis SET failed, cache skip:', redisErr.message);
   }
 
-  return { data: fullDetails, source: 'google' };
+  return { data: fullDetails, source: 'google'};
 };

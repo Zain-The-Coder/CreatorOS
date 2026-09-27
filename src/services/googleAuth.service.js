@@ -12,7 +12,8 @@ const scopes = [
     'openid' ,
     'email' ,
     'profile' ,
-    'https://www.googleapis.com/auth/youtube.readonly' // user ka YouTube channel data sirf dekh sakte ho
+    'https://www.googleapis.com/auth/youtube.readonly' ,
+    'https://www.googleapis.com/auth/yt-analytics.readonly',
 ];
 
 exports.getAuthUrl = (state) => {
@@ -75,46 +76,90 @@ exports.getUploadsPlaylistId = async (accessToken) => {
 };
 
 exports.getPlaylistVideos = async (accessToken, playlistId) => {
-  const res = await fetch(
-    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-  const data = await res.json();
+  let allVideos = [];
+  let pageToken = '';
 
-  return (data.items || []).map((item) => ({
-    videoId: item.snippet.resourceId.videoId,
-    title: item.snippet.title,
-    publishedAt: item.snippet.publishedAt,
-  }));
+  do {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50${pageToken ? `&pageToken=${pageToken}` : ''}`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json();
+
+    const videos = (data.items || []).map((item) => ({
+      videoId: item.snippet.resourceId.videoId,
+      title: item.snippet.title,
+      publishedAt: item.snippet.publishedAt,
+    }));
+
+    allVideos = allVideos.concat(videos);
+    pageToken = data.nextPageToken || null;
+
+  } while (pageToken);
+
+  return allVideos;
 };
 
 
 exports.getVideosFullDetails = async (accessToken, videoIds) => {
-  const idsParam = videoIds.join(',');
+  const allDetails = [];
+
+  // 50-50 ke chunks banao
+  for (let i = 0; i < videoIds.length; i += 50) {
+    const batch = videoIds.slice(i, i + 50);
+    const idsParam = batch.join(',');
+
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails,status&id=${idsParam}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await res.json();
+
+    const details = (data.items || []).map((item) => ({
+      videoId: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description,
+      publishedAt: item.snippet.publishedAt,
+      thumbnails: item.snippet.thumbnails,
+      tags: item.snippet.tags || [],
+      categoryId: item.snippet.categoryId,
+      views: item.statistics.viewCount,
+      likes: item.statistics.likeCount,
+      comments: item.statistics.commentCount,
+      duration: item.contentDetails.duration,
+      definition: item.contentDetails.definition,
+      caption: item.contentDetails.caption,
+      privacyStatus: item.status.privacyStatus,
+    }));
+
+    allDetails.push(...details);
+  }
+
+  return allDetails;
+};
+
+
+
+
+exports.getChannelAnalytics = async (accessToken, channelId) => {
+  const endDate = new Date().toISOString().split('T')[0]; // aaj ki date
+  const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]; // 30 din pehle
+
+  const params = new URLSearchParams({
+    ids: `channel==${channelId}`,
+    startDate,
+    endDate,
+    metrics: 'estimatedMinutesWatched,averageViewDuration,views',
+  });
 
   const res = await fetch(
-    `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails,status&id=${idsParam}`,
+    `https://youtubeanalytics.googleapis.com/v2/reports?${params}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
+
   const data = await res.json();
-
-  return (data.items || []).map((item) => ({
-    videoId: item.id,
-    title: item.snippet.title,
-    description: item.snippet.description,
-    publishedAt: item.snippet.publishedAt,
-    thumbnails: item.snippet.thumbnails.default,
-    tags: item.snippet.tags || [],
-    categoryId: item.snippet.categoryId,
-
-    views: item.statistics.viewCount,
-    likes: item.statistics.likeCount,
-    comments: item.statistics.commentCount,
-
-    duration: item.contentDetails.duration,
-    definition: item.contentDetails.definition, // hd / sd
-    caption: item.contentDetails.caption,       // true/false
-
-    privacyStatus: item.status.privacyStatus,   // public/private/unlisted
-  }));
+  return data;
 };

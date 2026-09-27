@@ -15,89 +15,78 @@ const stateSave = (req , res) => {
         
 }
  
-const redirectCallback = async (req , res) => {
-        try {
-            const {code , state} = req.query ;
-            const stateData = req.session.oauthstate;
-            
-            if (!code || state !== stateData) {
-                return res.status(403).json({
-                    status : 403 ,
-                    message : req.session ,
-                    state
-                })
-            }
-    
-            delete req.session.oauthstate;
-    
-    
-            const {profile , channel , refreshToken} = await googleService.handleCallback(code);
+const redirectCallback = async (req, res) => {
+    try {
+        const { code, state } = req.query;
+        const stateData = req.session.oauthstate;
 
-              if (req.session.linkUserId) {
-                const user = await userModel.findById(req.session.linkUserId);
-                user.youtube.channelId = channel?.id;
-                user.youtube.channelTitle = channel?.title;
-                user.youtube.subscribers = channel?.subscribers;
-                user.youtube.refreshToken = encrypt(refreshToken);
-                await user.save();
-                delete req.session.linkUserId;
-
-            return res.status(200).json({
-                status: 200,
-                message: 'YouTube connected successfully',
-                userDetails: user,
-            });
+        if (!code || state !== stateData) {
+            return res.status(403).json({
+                status: 403,
+                message: req.session,
+                state
+            })
         }
 
+        delete req.session.oauthstate;
 
-            const googleUserObj = {
-                googleId : profile.googleId ,
-                email : profile.email ,
-                profile_photo : profile.picture ,
-                youtube : {
-                    channelId : channel?.id  ,
-                    channelTitle : channel?.title ,
-                    subscribers : channel?.subscribers ,
-                    refreshToken : encrypt(refreshToken)
-                } ,
-            }
+        const { profile, channel, refreshToken } = await googleService.handleCallback(code);
 
-        let newGoogleUser ;
+        if (req.session.linkUserId) {
+            const user = await userModel.findById(req.session.linkUserId);
+            user.youtube.channelId = channel?.id;
+            user.youtube.channelTitle = channel?.title;
+            user.youtube.subscribers = channel?.subscribers;
+            user.youtube.refreshToken = encrypt(refreshToken);
+            user.profileCompleted = true;
+            await user.save();
+            delete req.session.linkUserId;
+
+            return res.redirect(`${process.env.FRONTEND_URL}/dashboard`)
+        }
+
+        const googleUserObj = {
+            googleId: profile.googleId,
+            email: profile.email,
+            profile_photo: profile.picture,
+            profileCompleted: true,
+            youtube: {
+                channelId: channel?.id,
+                channelTitle: channel?.title,
+                subscribers: channel?.subscribers,
+                refreshToken: encrypt(refreshToken)
+            },
+        }
+
+        let newGoogleUser;
         newGoogleUser = await userModel.findOne({
-            googleId : profile.googleId
+            googleId: profile.googleId
         })
 
-        if(newGoogleUser === null) {
+        if (newGoogleUser === null) {
             newGoogleUser = await userModel.create(googleUserObj)
         }
 
-
         const token = JWT.sign({
-            id : newGoogleUser._id 
-        } , config.JWT_SECRET , 
-        {expiresIn : "15m"})
+            id: newGoogleUser._id
+        }, config.JWT_SECRET,
+            { expiresIn: "15m" })
 
-        res.cookie("token" , token , {
-            httpOnly : true ,
-            sameSite : "lax" , 
-            maxAge : 60 * 60 * 24 * 1000
+        res.cookie("token", token, {
+            httpOnly: true,
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 1000
         })
 
-            res.status(200).json({
-                status : 200 ,
-                message : "User login successfully" , 
-                userDetails : newGoogleUser
-            })
+        return res.redirect(`${process.env.FRONTEND_URL}/dashboard`)
 
-        } catch (e) {
-            console.log(e.stack)
-            return res.status(500).json({
-                status : 500 ,
-                message : e.message ,
-                
-            })
-        }
+    } catch (e) {
+        console.log(e.stack)
+        return res.status(500).json({
+            status: 500,
+            message: e.message,
+        })
+    }
 }
-
 module.exports = {stateSave , redirectCallback}
 

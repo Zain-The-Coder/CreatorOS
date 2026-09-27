@@ -7,12 +7,20 @@ const session = require('express-session')
 const helmet = require('helmet')
 const config = require('./config/config.js')
 const redis = require('./services/redis.service.js')
+const cors = require('cors')
 
 const app = express()
 
 app.use(express.json())
 app.use(cookieParser())
 app.use(helmet())
+app.use(cors(
+    {
+        origin: "http://localhost:5173" ,
+        credentials: true,
+    }
+));
+
 
 app.use(session({
     secret: config.SESSION_SECRET,

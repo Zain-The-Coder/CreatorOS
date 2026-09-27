@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const userSchema = new mongoose.Schema({
     username : {
         type : String ,
-        required : [function () { return !this.googleId || this.profileCompleted }, "username is required"] ,
+        required : [function () { return !this.googleId}, "username is required"] ,
         lowercase : true ,
         unique : true ,
         sparse : true ,

@@ -5,8 +5,6 @@ const getMyVideos = async (req , res) => {
     try {
         const {data , source} = await getFullVideoDetails(req.user.id);
 
-        
-
         return res.status(200).json({
             status : 200 ,
             message : "Videos Fetched Successfully !",
