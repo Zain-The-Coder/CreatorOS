@@ -4,7 +4,9 @@ const videoSchema = new mongoose.Schema({
     creatorId : {
         type : mongoose.Schema.Types.ObjectId ,
         ref : "User" ,
-        required : true ,
+    } ,
+    video_id : {
+         type : String 
     } ,
     title : {
         type : String ,
@@ -13,36 +15,40 @@ const videoSchema = new mongoose.Schema({
     description : {
         type : String ,
     } ,
-    thumbnailUrl : {
+    video_published : {
         type : String ,
         required : true
     } ,
-    niche : {
-        type : String ,
-        required : true
-    } , 
-    video_Stats: [
+    stats: [
     {
         views: {
-            type: Number,
-            default: 0
+            type: String,
+            default: "0"
         },
 
         likes: {
-            type: Number,
-            default: 0
+            type: String,
+            default: "0"
         },
-
-        watchTimeMinutes :{
-            type: Number,
-            default: 0
+        comments : {
+            type : String ,
+            default : "0"
         } ,
-
+        caption : {
+            type : String 
+        } ,
+        tags : [String]
     }
 ]
 } , {timestamps : true})
 
-export const videoModel = mongoose.model("Video" , videoSchema)
+// Prevent duplicate videos for the same creator
+videoSchema.index(
+    { creatorId: 1, video_id: 1 },
+    { unique: true }
+);
 
+const videoModel = mongoose.model("Video" , videoSchema);
+module.exports = videoModel
 // • views, likes, comments, watchTimeMinutes, averageViewDuration
 // • publishedAt, lastSyncedAt

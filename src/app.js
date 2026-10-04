@@ -7,6 +7,7 @@ const session = require('express-session')
 const helmet = require('helmet')
 const config = require('./config/config.js')
 const redis = require('./services/redis.service.js')
+const aiRouter = require('./routes/ai.routes.js')
 const cors = require('cors')
 
 const app = express()
@@ -43,5 +44,7 @@ app.get("/" , (req , res) => {
 app.use("/api/auth" , authRouter)
 app.use("/auth" , oauthRouter)
 app.use('/api/dashboard' , dashBoardRouter)
+app.use('/api/ai' , aiRouter)
+
 
 module.exports = app ;

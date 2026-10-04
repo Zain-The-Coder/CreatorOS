@@ -70,12 +70,12 @@ const redirectCallback = async (req, res) => {
         const token = JWT.sign({
             id: newGoogleUser._id
         }, config.JWT_SECRET,
-            { expiresIn: "15m" })
+            { expiresIn: "25m" })
 
         res.cookie("token", token, {
             httpOnly: true,
             sameSite: "lax",
-            maxAge: 60 * 60 * 24 * 1000
+            maxAge: 60 * 60 * 24 * 1000 * 10
         })
 
         return res.redirect(`${process.env.FRONTEND_URL}/dashboard`)

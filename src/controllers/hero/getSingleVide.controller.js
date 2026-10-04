@@ -10,10 +10,12 @@ const getSingleVideo = async (req, res) => {
         const videoDetail = videoDetails.find((v) => v.videoId === videoId);
 
         if (!videoDetail) {
-            return res.status(404).json({ status: 404, message: 'Video nahi mili' });
+            return res.status(404).json({ status: 404, message: "Video Didn't found" });
         }
 
-        return res.status(200).json({ status: 200, data: videoDetail });
+
+        return res.status(200).json({ status: 200, data: videoDetail});
+
 
     } catch (e) {
         console.log(chalk.bold.red(e.stack))

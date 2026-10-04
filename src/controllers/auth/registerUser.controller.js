@@ -57,13 +57,13 @@ async function registerUserController (req , res) {
         const token = JWT.sign({
             id : user._id 
         } , config.JWT_SECRET , 
-        {expiresIn : "15m"})
+        {expiresIn : "25m"})
 
         res.cookie("token" , token , {
             httpOnly : true ,
             secure : true ,
             sameSite : "None" , 
-            maxAge : 60 * 60 * 24 * 1000
+            maxAge : 60 * 60 * 24 * 1000 * 10
         })
 
         res.status(201).json({
