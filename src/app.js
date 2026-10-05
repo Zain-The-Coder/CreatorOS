@@ -30,9 +30,10 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-    httpOnly: true,
-    sameSite: 'lax',
-  },
+        httpOnly: true,
+        sameSite: 'none',
+        secure: true,
+    },
 }));
 
 
